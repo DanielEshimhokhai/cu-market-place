@@ -1,0 +1,16 @@
+import type { OpeningHours } from "./hours";
+import type { OrderStatus, Fulfilment } from "./orders/transitions";
+export type ListingKind = "product" | "service";
+export type Condition = "new" | "like_new" | "used";
+export type ProductStatus = "draft" | "active" | "paused" | "removed";
+export type Category = { id: string; slug: string; name: string; kind: ListingKind; sort: number };
+export type Location = { id: string; slug: string; name: string; zone: "hostels" | "academic" | "central" | "other"; map_x: number; map_y: number };
+export type BusinessSummary = { id: string; slug: string; name: string; tagline: string | null; verified: boolean;
+  seller_type: "student" | "business"; rating_avg: number; rating_count: number; hours: OpeningHours | null;
+  logo_url: string | null; offers_delivery: boolean; category: Pick<Category, "slug" | "name"> | null;
+  location: Pick<Location, "slug" | "name"> | null; product_count?: number };
+export type ProductCardData = { id: string; slug: string; title: string; kind: ListingKind; price_kobo: number;
+  compare_at_kobo: number | null; stock: number | null; condition: Condition; rating_avg: number; rating_count: number;
+  image: string | null; business: Pick<BusinessSummary, "id" | "slug" | "name" | "verified">;
+  location: Pick<Location, "slug" | "name"> | null };
+export type { OrderStatus, Fulfilment };
