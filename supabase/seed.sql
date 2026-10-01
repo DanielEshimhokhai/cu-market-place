@@ -24,26 +24,26 @@ insert into public.categories (slug, name, kind, sort) values
 on conflict (slug) do nothing;
 
 insert into public.locations (slug, name, zone, map_x, map_y, sort) values
-  ('hostel-area-male', 'Hostel area (male halls)', 'hostels', 18, 30, 0),
-  ('hostel-area-female', 'Hostel area (female halls)', 'hostels', 80, 30, 1),
-  ('daniel-hall', 'Daniel Hall', 'hostels', 12, 22, 2),
-  ('joseph-hall', 'Joseph Hall', 'hostels', 20, 18, 3),
-  ('paul-hall', 'Paul Hall', 'hostels', 26, 24, 4),
-  ('peter-hall', 'Peter Hall', 'hostels', 14, 36, 5),
-  ('john-hall', 'John Hall', 'hostels', 24, 38, 6),
-  ('esther-hall', 'Esther Hall', 'hostels', 76, 20, 7),
-  ('mary-hall', 'Mary Hall', 'hostels', 84, 22, 8),
-  ('deborah-hall', 'Deborah Hall', 'hostels', 88, 34, 9),
-  ('lydia-hall', 'Lydia Hall', 'hostels', 78, 38, 10),
-  ('dorcas-hall', 'Dorcas Hall', 'hostels', 70, 30, 11),
-  ('student-centre', 'Student Centre', 'central', 50, 50, 12),
-  ('cafeteria-1', 'Cafeteria 1', 'central', 40, 44, 13),
-  ('cafeteria-2', 'Cafeteria 2', 'central', 60, 44, 14),
-  ('chapel-area', 'University Chapel area', 'central', 50, 66, 15),
-  ('library', 'Centre for Learning Resources', 'academic', 42, 76, 16),
-  ('cst', 'College of Science & Technology', 'academic', 30, 70, 17),
-  ('cmss', 'College of Management & Social Sciences', 'academic', 64, 74, 18),
-  ('main-gate', 'Main gate', 'other', 50, 94, 19)
+  ('hostel-area-male', 'Hostel area (male halls)', 'hostels', 18, 12, 0),
+  ('hostel-area-female', 'Hostel area (female halls)', 'hostels', 80, 12, 1),
+  ('daniel-hall', 'Daniel Hall', 'hostels', 8, 17, 2),
+  ('joseph-hall', 'Joseph Hall', 'hostels', 8, 23, 3),
+  ('paul-hall', 'Paul Hall', 'hostels', 8, 29, 4),
+  ('peter-hall', 'Peter Hall', 'hostels', 8, 35, 5),
+  ('john-hall', 'John Hall', 'hostels', 8, 41, 6),
+  ('esther-hall', 'Esther Hall', 'hostels', 70, 17, 7),
+  ('mary-hall', 'Mary Hall', 'hostels', 70, 23, 8),
+  ('deborah-hall', 'Deborah Hall', 'hostels', 70, 29, 9),
+  ('lydia-hall', 'Lydia Hall', 'hostels', 70, 35, 10),
+  ('dorcas-hall', 'Dorcas Hall', 'hostels', 70, 41, 11),
+  ('student-centre', 'Student Centre', 'central', 38, 60, 12),
+  ('cafeteria-1', 'Cafeteria 1', 'central', 38, 48, 13),
+  ('cafeteria-2', 'Cafeteria 2', 'central', 38, 54, 14),
+  ('chapel-area', 'University Chapel area', 'central', 38, 66, 15),
+  ('library', 'Centre for Learning Resources', 'academic', 26, 80, 16),
+  ('cst', 'College of Science & Technology', 'academic', 26, 86, 17),
+  ('cmss', 'College of Management & Social Sciences', 'academic', 56, 80, 18),
+  ('main-gate', 'Main gate', 'other', 50, 95, 19)
 on conflict (slug) do nothing;
 
 insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_user_meta_data, raw_app_meta_data, confirmation_token, recovery_token, email_change, email_change_token_new, created_at, updated_at) values
