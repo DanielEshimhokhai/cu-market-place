@@ -98,7 +98,7 @@ create trigger orders_touch before update on public.orders for each row execute 
 -- ── ordering ──────────────────────────────────────────────────────
 create or replace function public.place_orders(p_items jsonb, p_groups jsonb)
 returns table(order_id uuid, order_number bigint, business_id uuid)
-language plpgsql security definer set search_path = public as $
+language plpgsql security definer set search_path = public as $$
 #variable_conflict use_column
 declare
   v_uid uuid := auth.uid();
@@ -204,7 +204,7 @@ begin
     from (select l.variant_id, sum(l.quantity) q from _lines l where l.variant_id is not null group by l.variant_id) s
    where v.id = s.variant_id and v.stock is not null;
   perform set_config('app.trusted', '', true);
-end $;
+end $$;
 
 create or replace function public.set_order_status(p_order_id uuid, p_status order_status, p_instructions text default null)
 returns orders
@@ -298,7 +298,7 @@ begin
           case when v_recipient = v_owner then '/sell/orders/' || p_order_id else '/orders/' || p_order_id end);
   perform set_config('app.trusted', '', true);
   return v_order;
-end $;
+end $$;
 
 -- ── reviews ───────────────────────────────────────────────────────
 create or replace function public.before_review_insert() returns trigger
@@ -436,7 +436,7 @@ begin
   perform set_config('app.trusted', 'on', true);
   update products set view_count = view_count + 1 where id = p_product_id and status = 'active';
   perform set_config('app.trusted', '', true);
-end $;
+end $$;
 
 create or replace function public.search_products(p_q text) returns setof public.products
 language sql stable set search_path = public, extensions as $$
