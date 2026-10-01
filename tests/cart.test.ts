@@ -17,3 +17,32 @@ test("groups by seller preserving order, subtotals", () => {
   expect(g[0].deliveryAvailable).toBe(false);
   expect(g[1].deliveryAvailable).toBe(true);
 });
+
+import { reconcileLines, type LiveLine } from "@/lib/cart/cart";
+const live = (o: Partial<LiveLine>): LiveLine => ({ productId: "p1", variantId: null, available: true, unitPriceKobo: 1000, maxQuantity: null,
+  allowsPickup: true, allowsDelivery: false, ...o });
+
+test("reconcile: unchanged lines produce no notices", () => {
+  const r = reconcileLines([base({})], [live({})]);
+  expect(r.notices).toEqual({});
+  expect(r.lines[0].unitPriceKobo).toBe(1000);
+});
+test("reconcile: price change updates the line and flags it", () => {
+  const r = reconcileLines([base({})], [live({ unitPriceKobo: 1500 })]);
+  expect(r.lines[0].unitPriceKobo).toBe(1500);
+  expect(r.notices["p1:"]).toBe("price");
+});
+test("reconcile: quantity above live stock is clamped and flagged", () => {
+  const r = reconcileLines([base({ quantity: 5 })], [live({ maxQuantity: 2 })]);
+  expect(r.lines[0].quantity).toBe(2);
+  expect(r.notices["p1:"]).toBe("quantity");
+});
+test("reconcile: missing or unavailable lines are kept but flagged unavailable", () => {
+  const r = reconcileLines([base({}), base({ productId: "p2" })], [live({ available: false })]);
+  expect(r.notices["p1:"]).toBe("unavailable");
+  expect(r.notices["p2:"]).toBe("unavailable");
+  expect(r.lines).toHaveLength(2);
+});
+test("reconcile: sold out (max 0) is unavailable", () => {
+  expect(reconcileLines([base({})], [live({ maxQuantity: 0 })]).notices["p1:"]).toBe("unavailable");
+});

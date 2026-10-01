@@ -15,7 +15,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaHTMLAttributes<H
   { className, ...rest },
   ref,
 ) {
-  return <textarea ref={ref} className={cn(controlClass, "min-h-24 py-2 leading-6", className)} {...rest} />;
+  return <textarea ref={ref} rows={4} className={cn(controlClass, "py-2 leading-6", className)} {...rest} />;
 });
 
 const chevron =

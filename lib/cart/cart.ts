@@ -29,3 +29,36 @@ export function groupBySeller(lines: CartLine[]) {
   }
   return [...map.values()];
 }
+
+/** Current price/stock for a cart line, as read from the database at checkout time. */
+export type LiveLine = {
+  productId: string; variantId: string | null; available: boolean; unitPriceKobo: number;
+  maxQuantity: number | null; allowsPickup: boolean; allowsDelivery: boolean;
+};
+export type LineNotice = "price" | "quantity" | "unavailable";
+
+/** Applies live prices/stock to the cart. Unavailable lines stay (so the buyer sees why) but are flagged. */
+export function reconcileLines(lines: CartLine[], liveLines: LiveLine[]): { lines: CartLine[]; notices: Record<string, LineNotice> } {
+  const byKey = new Map(liveLines.map((l) => [lineKey(l), l]));
+  const notices: Record<string, LineNotice> = {};
+  const next = lines.map((line) => {
+    const key = lineKey(line);
+    const live = byKey.get(key);
+    if (!live || !live.available || live.maxQuantity === 0) {
+      notices[key] = "unavailable";
+      return line;
+    }
+    const updated: CartLine = {
+      ...line,
+      unitPriceKobo: live.unitPriceKobo,
+      maxQuantity: live.maxQuantity,
+      allowsPickup: live.allowsPickup,
+      allowsDelivery: live.allowsDelivery,
+      quantity: clamp(line.quantity, live.maxQuantity) || 1,
+    };
+    if (updated.quantity !== line.quantity) notices[key] = "quantity";
+    if (live.unitPriceKobo !== line.unitPriceKobo) notices[key] = "price";
+    return updated;
+  });
+  return { lines: next, notices };
+}
