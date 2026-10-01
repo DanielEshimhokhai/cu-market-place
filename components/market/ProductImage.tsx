@@ -24,6 +24,10 @@ export function ProductImage({ src, alt, placeholder, sizes, priority, className
       sizes={sizes}
       priority={priority}
       onLoad={() => setLoaded(true)}
+      // Images that finished loading before hydration never fire onLoad.
+      ref={(img) => {
+        if (img?.complete && img.naturalWidth > 0) setLoaded(true);
+      }}
       className={cn("object-cover transition-opacity duration-150", loaded ? "opacity-100" : "opacity-0", className)}
     />
   );

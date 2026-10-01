@@ -90,13 +90,18 @@ function base(supabase: Awaited<ReturnType<typeof createClient>>) {
   return supabase.from("products").select(PRODUCT_CARD_SELECT).eq("status", "active").eq("business.status", "active");
 }
 
-export const getTrending = (limit = 12) =>
-  listCards((q) => q.eq("kind", "product").or("stock.is.null,stock.gt.0").order("score", { ascending: false }), limit);
+/** Listings with photos first: a discovery rail of placeholders tells a buyer nothing. Stable within each group. */
+const photosFirst = (cards: ProductCardData[]) => [...cards.filter((c) => c.image), ...cards.filter((c) => !c.image)];
+
+export const getTrending = async (limit = 12) =>
+  photosFirst(
+    await listCards((q) => q.eq("kind", "product").or("stock.is.null,stock.gt.0").order("score", { ascending: false }), limit * 2),
+  ).slice(0, limit);
 
 export const getRecentlyListed = (limit = 12) => listCards((q) => q.order("created_at", { ascending: false }), limit);
 
-export const getPopularServices = (limit = 8) =>
-  listCards((q) => q.eq("kind", "service").order("score", { ascending: false }), limit);
+export const getPopularServices = async (limit = 8) =>
+  photosFirst(await listCards((q) => q.eq("kind", "service").order("score", { ascending: false }), limit * 2)).slice(0, limit);
 
 export async function getProductsByIds(ids: string[]): Promise<ProductCardData[]> {
   if (!ids.length) return [];

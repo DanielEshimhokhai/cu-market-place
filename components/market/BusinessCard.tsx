@@ -12,7 +12,7 @@ export function BusinessCard({ business: b, compact = false, className }: { busi
     <Link
       href={`/b/${b.slug}`}
       className={cn(
-        "flex min-w-0 gap-3 rounded-card border border-line bg-surface p-3 transition-colors duration-150 hover:border-line-strong",
+        "relative flex min-w-0 gap-3 rounded-card border border-line bg-surface p-3 transition-colors duration-150 hover:border-line-strong",
         compact && "w-[260px] shrink-0 snap-start",
         className,
       )}

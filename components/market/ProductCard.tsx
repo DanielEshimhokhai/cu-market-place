@@ -24,7 +24,7 @@ type Props = { product: ProductCardData; saved?: boolean; priority?: boolean; cl
 export function ProductCard({ product: p, saved = false, priority, className }: Props) {
   const badge = cardBadge(p);
   return (
-    <Link href={`/p/${p.slug}`} className={cn("group block min-w-0", className)}>
+    <Link href={`/p/${p.slug}`} className={cn("group relative block min-w-0", className)}>
       <div className="relative aspect-[4/5] overflow-hidden rounded-card bg-subtle">
         <ProductImage
           src={p.image}

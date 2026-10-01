@@ -7,7 +7,7 @@ type Props = { products: ProductCardData[]; savedIds?: Set<string>; variant?: "g
 export function ProductGrid({ products, savedIds, variant = "grid", priorityCount = 0, className }: Props) {
   if (variant === "rail") {
     return (
-      <div className={cn("no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 md:mx-0 md:px-0", className)}>
+      <div className={cn("no-scrollbar -mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 md:mx-0 md:scroll-px-0 md:px-0", className)}>
         {products.map((p, i) => (
           <ProductCard key={p.id} product={p} saved={savedIds?.has(p.id)} priority={i < priorityCount} className="w-[44vw] shrink-0 snap-start sm:w-[200px]" />
         ))}
