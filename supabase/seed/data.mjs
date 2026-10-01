@@ -381,15 +381,12 @@ export const reviewTexts = {
     "Came in perfect condition. The seller even double-checked the size with me first.",
     "Original, not a copy. Very happy with it.",
     "Fast response and easy pickup at the hall.",
-    "Slightly different shade from the photo but still nice.",
     "Packaging was neat. Would recommend to friends.",
-    "Took a day longer than expected but the seller kept me updated.",
     "Great value. Much cheaper than buying in Lagos.",
     "The material is thicker than I expected, in a good way.",
     "Seller was honest about a small mark on it. Fair price.",
     "Works perfectly. Charging is fast.",
     "Bought it as a gift and my roommate loved it.",
-    "Decent, but I wish there were more sizes.",
     "Battery life is as described. No complaints.",
     "Smells amazing and lasts all day.",
     "Second time buying from this seller. Consistent.",
@@ -399,21 +396,17 @@ export const reviewTexts = {
   food: [
     "Still hot when it got to my hall. Portion was generous.",
     "Best jollof on campus, no argument.",
-    "Tasty, but it took about an hour on a Friday evening.",
     "Fresh and not too sweet. Perfect after lectures.",
     "The cake was beautiful and everyone at the birthday loved it.",
     "Good value for the price. The chicken was well seasoned.",
     "Ordered for my study group and everyone wanted more.",
-    "A little too spicy for me, but well made.",
     "Cupcakes were soft and the frosting wasn't too heavy.",
     "Fast delivery to Daniel Hall. Will order again.",
     "Consistent every time I order.",
-    "Portion was smaller than last time but still good.",
   ],
   service: [
     "Very professional and on time. The result was exactly what I asked for.",
     "Clean cut and a clean space. Booked my next slot already.",
-    "Took longer than I expected, but the result was worth it.",
     "Fair price and the quality is great.",
     "The photos came out beautiful. Delivered in four days.",
     "Explained everything clearly. My grades improved.",
@@ -427,6 +420,30 @@ export const reviewTexts = {
 };
 
 // Simple scripted exchanges for demo conversations: [buyer message, seller reply, optional follow-up]
+// Lukewarm and negative texts, used for 1–3 star ratings so text and stars agree.
+export const mixedReviewTexts = {
+  product: [
+    "Slightly different shade from the photo but still nice.",
+    "Took a day longer than expected but the seller kept me updated.",
+    "Decent, but I wish there were more sizes.",
+    "Okay for the price. The finishing could be better.",
+    "Not exactly as described. The seller offered to swap it, though.",
+    "Smaller than I expected. Check the measurements before you order.",
+  ],
+  food: [
+    "Tasty, but it took about an hour on a Friday evening.",
+    "A little too spicy for me, but well made.",
+    "Portion was smaller than last time but still good.",
+    "Arrived lukewarm. The taste was fine.",
+  ],
+  service: [
+    "Took longer than I expected, but the result was worth it.",
+    "Had to wait 40 minutes past my slot.",
+    "Good result, but communication before the appointment could be better.",
+    "Fine, but not worth the price for me.",
+  ],
+};
+
 export const conversationScripts = [
   ["Is this still available?", "Yes, it is. When would you like to pick it up?", "This evening works, around 6."],
   ["Where can I pick this up?", "At my hall reception. I'll send exact details once you order.", "Okay, thanks!"],

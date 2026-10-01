@@ -3,7 +3,7 @@
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import {
-  DEMO_DOMAIN, categories, locations, HOURS, buyers, IMG, businesses, ownerNames, reviewTexts, conversationScripts,
+  DEMO_DOMAIN, categories, locations, HOURS, buyers, IMG, businesses, ownerNames, reviewTexts, mixedReviewTexts, conversationScripts,
 } from "./data.mjs";
 
 // ── helpers ─────────────────────────────────────────────────────────
@@ -123,7 +123,10 @@ const pickRating = () => {
   return 5;
 };
 const near = (r) => Math.min(5, Math.max(1, r + pick([-1, 0, 0, 0, 1])));
-const textPool = (pr) => (pr.kind === "service" ? reviewTexts.service : pr.business.category === "food" ? reviewTexts.food : reviewTexts.product);
+const textPool = (pr, rating) => {
+  const pools = rating >= 4 ? reviewTexts : mixedReviewTexts;
+  return pr.kind === "service" ? pools.service : pr.business.category === "food" ? pools.food : pools.product;
+};
 
 const orderRows = [], itemRows = [], eventRows = [], reviewRows = [];
 const orderCount = new Map();
@@ -184,7 +187,7 @@ for (let n = 0; n < 160; n++) {
       const sub = chance(0.5);
       reviewRows.push([q(uuidFrom(`review:${n}:${i}`)), q(orderId), q(pr.id), q(bz.id), q(userId(buyer)), rating,
         sub ? near(rating) : "null", sub ? near(rating) : "null", sub ? near(rating) : "null", sub ? near(rating) : "null",
-        chance(0.6) ? q(pick(textPool(pr))) : "null", "true", ago(Math.max(1, times.completed - int(30, 3 * DAY)))]);
+        chance(0.6) ? q(pick(textPool(pr, rating))) : "null", "true", ago(Math.max(1, times.completed - int(30, 3 * DAY)))]);
     }
   });
 }
