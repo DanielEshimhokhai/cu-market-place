@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { imageUrl } from "@/lib/images";
 import { normalizeQuery } from "@/lib/search";
+import type { BrowseParams } from "@/lib/browse-params";
 import type { Condition, ListingKind, ProductCardData } from "@/lib/types";
 import { getCategories, getLocations } from "./reference";
 
@@ -31,12 +32,6 @@ export function toCard(row: Row): ProductCardData {
 }
 
 export const PAGE_SIZE = 24;
-export type BrowseSort = "recommended" | "newest" | "price_asc" | "price_desc" | "rating";
-export type BrowseParams = {
-  q?: string; category?: string; kind?: ListingKind; min?: number; max?: number; location?: string; rating?: number;
-  inStock?: boolean; seller?: "student" | "business" | "verified"; condition?: Condition; fulfilment?: "pickup" | "delivery";
-  sort?: BrowseSort; page?: number;
-};
 
 export async function browseProducts(p: BrowseParams): Promise<{ items: ProductCardData[]; total: number; pageSize: number }> {
   const supabase = await createClient();
