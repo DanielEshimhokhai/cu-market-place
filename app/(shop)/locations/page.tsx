@@ -20,7 +20,7 @@ export default async function LocationsPage() {
       <CampusMap locations={locations} className="mt-6 md:max-w-xl" />
       <div className="mt-8 grid gap-8 md:grid-cols-2 lg:grid-cols-4">
         {zones.map((zone) => (
-          <section key={zone}>
+          <section key={zone} className="min-w-0">
             <h2 className="mb-2 text-[13px] font-semibold text-ink">{ZONE_LABEL[zone]}</h2>
             <ul className="divide-y divide-line rounded-card border border-line bg-surface">
               {locations.filter((l) => l.zone === zone).map((l) => (

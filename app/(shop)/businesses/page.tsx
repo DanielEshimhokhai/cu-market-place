@@ -26,6 +26,8 @@ function Grid({ businesses }: { businesses: BusinessCardData[] }) {
   );
 }
 
+const joinedWithin30Days = (iso: string) => Date.now() - new Date(iso).getTime() < 30 * 24 * 3600 * 1000;
+
 export default async function BusinessesPage({ searchParams }: PageProps<"/businesses">) {
   const sp = await searchParams;
   const category = typeof sp.category === "string" ? sp.category : undefined;
@@ -49,9 +51,8 @@ export default async function BusinessesPage({ searchParams }: PageProps<"/busin
     return `/businesses${str ? `?${str}` : ""}`;
   };
 
-  const monthAgo = Date.now() - 30 * 24 * 3600 * 1000;
   const favourites = all.filter((b) => b.rating_avg >= 4.5 && b.rating_count >= 6).sort((a, b) => b.rating_avg - a.rating_avg).slice(0, 4);
-  const newOnCampus = all.filter((b) => new Date(b.created_at).getTime() > monthAgo).slice(0, 4);
+  const newOnCampus = all.filter((b) => joinedWithin30Days(b.created_at)).slice(0, 4);
 
   return (
     <>

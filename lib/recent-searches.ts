@@ -1,12 +1,20 @@
+import { readStored, writeStored } from "./local-store";
 import { normalizeQuery } from "./search";
 
-const KEY = "cu-recent-searches";
+export const RECENT_KEY = "cu-recent-searches";
+const KEY = RECENT_KEY;
 const MAX = 6;
 
 type Store = Pick<Storage, "getItem" | "setItem" | "removeItem">;
-const defaultStore = (): Store | null => (typeof localStorage === "undefined" ? null : localStorage);
+// In the browser, go through local-store so components reading the value re-render on change.
+const browserStore: Store = {
+  getItem: (k) => readStored(k),
+  setItem: (k, v) => writeStored(k, v),
+  removeItem: (k) => writeStored(k, null),
+};
+const defaultStore = (): Store | null => (typeof window === "undefined" ? null : browserStore);
 
-export const POPULAR_SEARCHES = ["perfume", "thrift", "food", "phone accessories", "sneakers", "cakes", "laptop charger", "braids"];
+export { POPULAR_SEARCHES } from "./popular-searches";
 
 export function getRecent(store: Store | null = defaultStore()): string[] {
   try {

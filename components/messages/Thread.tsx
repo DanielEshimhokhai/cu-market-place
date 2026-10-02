@@ -76,7 +76,10 @@ export function Thread({ thread }: { thread: ThreadData }) {
   };
 
   const showPrompts = thread.role === "buyer" && !messages.some((m) => m.sender_id !== thread.viewerId) && messages.length < 2;
-  let lastDay = "";
+  const dayHeaders = messages.map((m, i) => {
+    const day = dayLabel(m.created_at);
+    return i === 0 || dayLabel(messages[i - 1].created_at) !== day ? day : null;
+  });
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -107,11 +110,9 @@ export function Thread({ thread }: { thread: ThreadData }) {
             {thread.role === "buyer" ? "Ask the seller anything about this listing." : "No messages yet."}
           </p>
         )}
-        {messages.map((m) => {
+        {messages.map((m, i) => {
           const mine = m.sender_id === thread.viewerId;
-          const day = dayLabel(m.created_at);
-          const header = day !== lastDay ? day : null;
-          lastDay = day;
+          const header = dayHeaders[i];
           return (
             <div key={m.id}>
               {header && <p className="py-2 text-center text-[11px] font-medium text-faint">{header}</p>}

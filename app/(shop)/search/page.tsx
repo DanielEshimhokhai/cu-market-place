@@ -12,7 +12,7 @@ import { Tabs } from "@/components/ui/Tabs";
 import { getCategories } from "@/lib/queries/reference";
 import { getSavedProductIds } from "@/lib/queries/saved";
 import { searchAll } from "@/lib/queries/search";
-import { POPULAR_SEARCHES } from "@/lib/recent-searches";
+import { POPULAR_SEARCHES } from "@/lib/popular-searches";
 import { normalizeQuery } from "@/lib/search";
 
 type Tab = "all" | "products" | "services" | "businesses";
@@ -42,7 +42,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
   const header = (
     <div className="pt-4 md:pt-8">
       <div className="max-w-2xl">
-        <SearchBar size="lg" defaultValue={q} autoFocus={!q} />
+        <SearchBar key={q} size="lg" defaultValue={q} autoFocus={!q} />
       </div>
     </div>
   );
@@ -51,6 +51,7 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
     const categories = await getCategories();
     return (
       <>
+        <h1 className="sr-only">Search</h1>
         {header}
         <RecentSearches />
         <section className="pt-6">

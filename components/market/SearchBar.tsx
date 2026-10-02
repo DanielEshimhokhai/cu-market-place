@@ -7,7 +7,8 @@ import { Clock, Search, Store, Tag, TrendingUp, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatNaira } from "@/lib/money";
 import { normalizeQuery } from "@/lib/search";
-import { clearRecent, getRecent, POPULAR_SEARCHES, pushRecent } from "@/lib/recent-searches";
+import { useStoredString } from "@/lib/local-store";
+import { clearRecent, getRecent, POPULAR_SEARCHES, pushRecent, RECENT_KEY } from "@/lib/recent-searches";
 import type { Suggestions } from "@/lib/queries/search";
 
 type Option = { key: string; href: string; group: string; render: React.ReactNode };
@@ -22,23 +23,21 @@ export function SearchBar({ size = "md", defaultValue = "", autoFocus = false }:
   const [value, setValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
-  const [results, setResults] = useState<Suggestions>(EMPTY);
-  const [recent, setRecent] = useState<string[]>([]);
+  const [fetched, setFetched] = useState<{ q: string; data: Suggestions }>({ q: "", data: EMPTY });
+  const recentRaw = useStoredString(RECENT_KEY);
+  const recent = useMemo(() => (recentRaw === null ? [] : getRecent()), [recentRaw]);
   const q = normalizeQuery(value);
-
-  useEffect(() => setValue(defaultValue), [defaultValue]);
+  // Only show suggestions that belong to the current text (empty input shows recents instead).
+  const results = q ? fetched.data : EMPTY;
 
   // Debounced fetch; the previous request is aborted when the query changes.
   useEffect(() => {
-    if (!q) {
-      setResults(EMPTY);
-      return;
-    }
+    if (!q) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`/api/search/suggest?q=${encodeURIComponent(q)}`, { signal: controller.signal });
-        if (res.ok) setResults(await res.json());
+        if (res.ok) setFetched({ q, data: await res.json() });
       } catch {
         // aborted or offline: keep the previous suggestions
       }
@@ -119,7 +118,8 @@ export function SearchBar({ size = "md", defaultValue = "", autoFocus = false }:
     }
   };
 
-  let lastGroup = "";
+  // Group headers are computed up front (no mutation during render).
+  const headers = options.map((opt, i) => (opt.group && opt.group !== options[i - 1]?.group ? opt.group : null));
   return (
     <div ref={rootRef} className="relative">
       <form
@@ -145,10 +145,7 @@ export function SearchBar({ size = "md", defaultValue = "", autoFocus = false }:
           aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
           aria-label="Search products, services or businesses"
           placeholder="Search products, services or businesses…"
-          onFocus={() => {
-            setRecent(getRecent());
-            setOpen(true);
-          }}
+          onFocus={() => setOpen(true)}
           onChange={(e) => {
             setValue(e.target.value);
             setActive(-1);
@@ -180,10 +177,7 @@ export function SearchBar({ size = "md", defaultValue = "", autoFocus = false }:
           {!q && recent.length > 0 && (
             <button
               type="button"
-              onClick={() => {
-                clearRecent();
-                setRecent([]);
-              }}
+              onClick={() => clearRecent()}
               className="float-right px-2 py-1.5 text-xs text-muted hover:text-ink"
             >
               Clear
@@ -191,8 +185,7 @@ export function SearchBar({ size = "md", defaultValue = "", autoFocus = false }:
           )}
           <ul id={listId} role="listbox" aria-label="Search suggestions">
             {options.map((opt, i) => {
-              const header = opt.group && opt.group !== lastGroup ? opt.group : null;
-              lastGroup = opt.group;
+              const header = headers[i];
               return (
                 <li key={opt.key} role="presentation">
                   {header && <p className="px-2 pt-2 pb-1 text-xs font-medium text-faint">{header}</p>}

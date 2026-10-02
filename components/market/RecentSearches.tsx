@@ -1,18 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { clearRecent, getRecent } from "@/lib/recent-searches";
+import { useMemo } from "react";
+import { useStoredString } from "@/lib/local-store";
+import { clearRecent, getRecent, RECENT_KEY } from "@/lib/recent-searches";
 
 export function RecentSearches() {
-  const [recent, setRecent] = useState<string[]>([]);
-  useEffect(() => setRecent(getRecent()), []);
+  const raw = useStoredString(RECENT_KEY);
+  const recent = useMemo(() => (raw === null ? [] : getRecent({ getItem: () => raw, setItem: () => {}, removeItem: () => {} })), [raw]);
   if (!recent.length) return null;
   return (
     <section className="pt-6">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-[13px] font-semibold text-muted">Recent searches</h2>
-        <button type="button" onClick={() => { clearRecent(); setRecent([]); }} className="text-xs text-muted hover:text-ink">
+        <button type="button" onClick={() => clearRecent()} className="text-xs text-muted hover:text-ink">
           Clear
         </button>
       </div>

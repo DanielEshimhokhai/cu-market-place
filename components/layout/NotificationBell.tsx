@@ -8,16 +8,18 @@ import { createBrowserClient } from "@/lib/supabase/client";
 
 /** Server-rendered unread count, kept live by a realtime subscription to the viewer's own notifications. */
 export function NotificationBell({ unread, userId }: { unread: number; userId: string }) {
-  const [count, setCount] = useState(unread);
+  const [live, setLive] = useState({ base: unread, extra: 0 });
   const [flash, setFlash] = useState(false);
-  useEffect(() => setCount(unread), [unread]);
+  // A fresh server count (navigation, refresh) replaces the live tally.
+  if (live.base !== unread) setLive({ base: unread, extra: 0 });
+  const count = unread + live.extra;
 
   useEffect(() => {
     const supabase = createBrowserClient();
     const channel = supabase
       .channel(`notifications:${userId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, () => {
-        setCount((c) => c + 1);
+        setLive((l) => ({ ...l, extra: l.extra + 1 }));
         setFlash(true);
         setTimeout(() => setFlash(false), 2000);
       })

@@ -131,6 +131,6 @@ export async function getEditableProduct(businessId: string, id: string): Promis
   return {
     ...row,
     images: [...row.images].sort((a, b) => a.position - b.position).map((i) => ({ path: i.path, url: imageUrl(i.path)! })),
-    variants: [...row.variants].sort((a, b) => a.position - b.position).map(({ position: _p, ...v }) => v),
+    variants: [...row.variants].sort((a, b) => a.position - b.position).map((v) => ({ name: v.name, value: v.value, stock: v.stock, price_delta_kobo: v.price_delta_kobo })),
   };
 }

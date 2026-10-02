@@ -24,7 +24,8 @@ describe("businessSchema", () => {
   test("accepts a valid store", () => expect(businessSchema.safeParse(valid).success).toBe(true));
   test("checkbox 'on' becomes true, missing becomes false", () => {
     expect(businessSchema.parse(valid).offers_delivery).toBe(true);
-    const { offers_delivery: _, ...rest } = valid;
+    const rest: Record<string, string> = { ...valid };
+    delete rest.offers_delivery;
     expect(businessSchema.parse(rest).offers_delivery).toBe(false);
   });
   test("name too short", () => expect(businessSchema.safeParse({ ...valid, name: "D" }).success).toBe(false));

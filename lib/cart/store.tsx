@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { readStored, useHydrated, useStoredString, writeStored } from "@/lib/local-store";
 import { addLine, cartCount, removeLine, setQuantity, type CartLine } from "./cart";
 
 const STORAGE_KEY = "cu-cart:v1";
@@ -18,9 +19,8 @@ type CartApi = {
 
 const CartContext = createContext<CartApi | null>(null);
 
-function read(): CartLine[] {
+function parse(raw: string | null): CartLine[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -28,34 +28,14 @@ function read(): CartLine[] {
   }
 }
 
-function write(lines: CartLine[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
-  } catch {
-    // Storage unavailable (private mode); the cart still works for this page view.
-  }
-}
-
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [lines, setLines] = useState<CartLine[]>([]);
-  const [ready, setReady] = useState(false);
+  const raw = useStoredString(STORAGE_KEY);
+  const ready = useHydrated();
+  const lines = useMemo(() => parse(raw), [raw]);
 
-  useEffect(() => {
-    setLines(read());
-    setReady(true);
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) setLines(read());
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-
+  // Read the latest stored value (not the render snapshot) so rapid updates compose correctly.
   const update = useCallback((fn: (prev: CartLine[]) => CartLine[]) => {
-    setLines((prev) => {
-      const next = fn(prev);
-      write(next);
-      return next;
-    });
+    writeStored(STORAGE_KEY, JSON.stringify(fn(parse(readStored(STORAGE_KEY)))));
   }, []);
 
   const api = useMemo<CartApi>(

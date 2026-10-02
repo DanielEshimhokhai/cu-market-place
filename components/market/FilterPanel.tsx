@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Input, Select } from "@/components/ui/Input";
 import { cn } from "@/lib/cn";
@@ -36,21 +36,30 @@ function Radio<T extends string | number | undefined>({ name, value, current, la
   return <Checkbox type="radio" name={name} checked={current === value} onChange={() => onPick(value)} label={label} />;
 }
 
+const toNaira = (v: string) => {
+  const cleaned = v.replace(/[,\s₦]/g, "");
+  return /^\d+$/.test(cleaned) ? Number(cleaned) : undefined;
+};
+
+function PriceInputs({ min: initialMin, max: initialMax, onApply }: { min?: number; max?: number; onApply: (min?: number, max?: number) => void }) {
+  const [min, setMin] = useState(initialMin?.toString() ?? "");
+  const [max, setMax] = useState(initialMax?.toString() ?? "");
+  const apply = () => {
+    if (toNaira(min) !== initialMin || toNaira(max) !== initialMax) onApply(toNaira(min), toNaira(max));
+  };
+  return (
+    <div className="flex items-center gap-2">
+      <Input aria-label="Minimum price" inputMode="numeric" placeholder="Min" value={min} onChange={(e) => setMin(e.target.value)} onBlur={apply} onKeyDown={(e) => e.key === "Enter" && apply()} className="h-9" />
+      <span className="text-faint">–</span>
+      <Input aria-label="Maximum price" inputMode="numeric" placeholder="Max" value={max} onChange={(e) => setMax(e.target.value)} onBlur={apply} onKeyDown={(e) => e.key === "Enter" && apply()} className="h-9" />
+    </div>
+  );
+}
+
 export function FilterPanel({ categories, locations, hideKind = false }: { categories: Category[]; locations: Location[]; hideKind?: boolean }) {
   const { params: p, update } = useBrowse();
   const [showAllCats, setShowAllCats] = useState(false);
-  const [min, setMin] = useState(p.min?.toString() ?? "");
-  const [max, setMax] = useState(p.max?.toString() ?? "");
-  useEffect(() => {
-    setMin(p.min?.toString() ?? "");
-    setMax(p.max?.toString() ?? "");
-  }, [p.min, p.max]);
-
   const visibleCats = showAllCats ? categories : categories.slice(0, 8);
-  const applyPrice = () => {
-    const toNum = (v: string) => (/^\d+$/.test(v.replace(/[,\s₦]/g, "")) ? Number(v.replace(/[,\s₦]/g, "")) : undefined);
-    update({ min: toNum(min), max: toNum(max) });
-  };
   const set = <K extends keyof BrowseParams>(key: K) => (v: BrowseParams[K]) => update({ [key]: v } as Partial<BrowseParams>);
 
   return (
@@ -76,11 +85,8 @@ export function FilterPanel({ categories, locations, hideKind = false }: { categ
       </Group>
 
       <Group title="Price (₦)">
-        <div className="flex items-center gap-2">
-          <Input aria-label="Minimum price" inputMode="numeric" placeholder="Min" value={min} onChange={(e) => setMin(e.target.value)} onBlur={applyPrice} onKeyDown={(e) => e.key === "Enter" && applyPrice()} className="h-9" />
-          <span className="text-faint">–</span>
-          <Input aria-label="Maximum price" inputMode="numeric" placeholder="Max" value={max} onChange={(e) => setMax(e.target.value)} onBlur={applyPrice} onKeyDown={(e) => e.key === "Enter" && applyPrice()} className="h-9" />
-        </div>
+        {/* Remounts when the URL's price changes, so the inputs never drift from the applied filter. */}
+        <PriceInputs key={`${p.min ?? ""}-${p.max ?? ""}`} min={p.min} max={p.max} onApply={(min, max) => update({ min, max })} />
         <div className="mt-2 flex flex-wrap gap-1.5">
           {PRICE_RANGES.map((r) => {
             const active = p.min === r.min && p.max === r.max;

@@ -6,6 +6,7 @@ export default function NotFound() {
   return (
     <ShopShell>
       <div className="py-12">
+        <h1 className="sr-only">Page not found</h1>
         <EmptyState
           icon={SearchX}
           title="Page not found"
