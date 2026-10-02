@@ -13,6 +13,7 @@ const files = [
   "supabase/migrations/0003_policies.sql",
   "supabase/migrations/0004_search_prefix.sql",
   "supabase/migrations/0005_map_layout.sql",
+  "supabase/migrations/0006_order_conversation.sql",
   ...(withSeed ? ["supabase/seed.sql", "supabase/tests/rls.sql"] : []),
 ];
 

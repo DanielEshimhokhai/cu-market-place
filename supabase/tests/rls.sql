@@ -92,5 +92,20 @@ do $$ declare v_before numeric; begin
   perform count(*) from public.search_products('   ');
 end $$;
 
+-- 7. order conversation: buyer and seller can open it, outsiders cannot
+do $$ declare v1 uuid; v2 uuid; begin
+  perform pg_temp.as_user('t.tobi');
+  v1 := public.start_order_conversation(current_setting('t.order')::uuid);
+  perform pg_temp.as_user('t.daniel');
+  v2 := public.start_order_conversation(current_setting('t.order')::uuid);
+  if v1 <> v2 then raise exception 'FAIL: buyer and seller got different order conversations'; end if;
+  perform pg_temp.as_user('t.amara');
+  begin
+    perform public.start_order_conversation(current_setting('t.order')::uuid);
+    raise exception 'FAIL: outsider opened order conversation';
+  exception when others then if sqlerrm <> 'NOT_FOUND' then raise exception 'FAIL: got %', sqlerrm; end if;
+  end;
+end $$;
+
 select 'ALL RLS CHECKS PASSED' as result;
 rollback;

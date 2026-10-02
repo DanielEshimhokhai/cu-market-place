@@ -8,6 +8,7 @@ import { AccountMenu } from "./AccountMenu";
 import { CartButton } from "./CartButton";
 import { Logo } from "./Logo";
 import { NavLinks } from "./NavLinks";
+import { countUnreadConversations } from "@/lib/queries/messages";
 import { NotificationBell } from "./NotificationBell";
 
 async function unreadCount(userId: string) {
@@ -22,7 +23,7 @@ async function unreadCount(userId: string) {
 
 export async function SiteHeader() {
   const viewer = await getViewer();
-  const unread = viewer ? await unreadCount(viewer.id) : 0;
+  const [unread, unreadMessages] = viewer ? await Promise.all([unreadCount(viewer.id), countUnreadConversations(viewer)]) : [0, 0];
 
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-surface">
@@ -42,11 +43,16 @@ export async function SiteHeader() {
               <Button href={viewer.businessId ? "/sell" : "/sell/onboarding"} variant="secondary" size="sm" className="mr-1 hidden md:inline-flex">
                 Sell
               </Button>
-              <Link href="/messages" aria-label="Messages" className="hidden size-9 items-center justify-center rounded-control text-ink hover:bg-subtle md:inline-flex">
+              <Link
+                href="/messages"
+                aria-label={unreadMessages ? `Messages, ${unreadMessages} unread` : "Messages"}
+                className="relative hidden size-9 items-center justify-center rounded-control text-ink hover:bg-subtle md:inline-flex"
+              >
                 <MessageSquare size={20} strokeWidth={1.75} />
+                {unreadMessages > 0 && <span aria-hidden className="absolute top-1.5 right-1.5 size-2 rounded-full border-2 border-surface bg-accent" />}
               </Link>
               <span className="hidden md:inline-flex">
-                <NotificationBell unread={unread} />
+                <NotificationBell unread={unread} userId={viewer.id} />
               </span>
             </>
           )}

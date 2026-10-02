@@ -1,17 +1,42 @@
-import Link from "next/link";
-import { Bell } from "lucide-react";
+"use client";
 
-export function NotificationBell({ unread }: { unread: number }) {
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { Bell } from "lucide-react";
+import { cn } from "@/lib/cn";
+import { createBrowserClient } from "@/lib/supabase/client";
+
+/** Server-rendered unread count, kept live by a realtime subscription to the viewer's own notifications. */
+export function NotificationBell({ unread, userId }: { unread: number; userId: string }) {
+  const [count, setCount] = useState(unread);
+  const [flash, setFlash] = useState(false);
+  useEffect(() => setCount(unread), [unread]);
+
+  useEffect(() => {
+    const supabase = createBrowserClient();
+    const channel = supabase
+      .channel(`notifications:${userId}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${userId}` }, () => {
+        setCount((c) => c + 1);
+        setFlash(true);
+        setTimeout(() => setFlash(false), 2000);
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
   return (
     <Link
       href="/notifications"
-      aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
-      className="relative inline-flex size-9 items-center justify-center rounded-control text-ink hover:bg-subtle"
+      aria-label={count ? `Notifications, ${count} unread` : "Notifications"}
+      className={cn("relative inline-flex size-9 items-center justify-center rounded-control text-ink transition-colors duration-150 hover:bg-subtle", flash && "bg-accent-soft")}
     >
       <Bell size={20} strokeWidth={1.75} />
-      {unread > 0 && (
+      {count > 0 && (
         <span className="tabular absolute top-0.5 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-semibold text-white">
-          {unread > 9 ? "9+" : unread}
+          {count > 9 ? "9+" : count}
         </span>
       )}
     </Link>
