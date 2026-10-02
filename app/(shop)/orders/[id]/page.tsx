@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { ChevronLeft, MapPin, Truck } from "lucide-react";
 import { BuyerOrderActions } from "@/components/market/BuyerOrderActions";
 import { OrderStatusBadge, OrderTimeline } from "@/components/market/OrderStatus";
+import { ReportDialog } from "@/components/market/ReportDialog";
 import { VerifiedBadge } from "@/components/market/VerifiedBadge";
 import { requireViewer } from "@/lib/auth";
 import { formatNaira } from "@/lib/money";
@@ -97,7 +98,7 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
             reviewable={order.reviewable}
             messageHref={`/messages/start?business=${b.id}&order=${order.id}`}
           />
-          <a href="#report" className="block text-xs text-muted hover:text-ink">Report a problem with this order</a>
+          <ReportDialog targetType="business" targetId={b.id} label="Report a problem with this order" signedIn defaultDetails={`Order #${order.number}: `} />
         </div>
 
         <aside className="space-y-4">

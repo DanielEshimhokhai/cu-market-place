@@ -10,6 +10,7 @@ import { ProductGrid } from "@/components/market/ProductGrid";
 import { PurchasePanel } from "@/components/market/PurchasePanel";
 import { Rating } from "@/components/market/Rating";
 import { RecentlyViewed } from "@/components/market/RecentlyViewed";
+import { ReportDialog } from "@/components/market/ReportDialog";
 import { ReviewCard } from "@/components/market/ReviewCard";
 import { ReviewSummary } from "@/components/market/ReviewSummary";
 import { Section } from "@/components/market/Section";
@@ -153,11 +154,11 @@ export default async function ProductPage({ params }: PageProps<"/p/[slug]">) {
             </div>
           )}
 
-          <div id="report" className="mt-6">
-            <Link href={`#report`} data-report-target="product" className="text-xs text-muted hover:text-ink">
-              Report listing
-            </Link>
-          </div>
+          {!isOwner && (
+            <div className="mt-6">
+              <ReportDialog targetType="product" targetId={product.id} label="Report listing" title="Report this listing" signedIn={!!viewer} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -191,7 +192,7 @@ export default async function ProductPage({ params }: PageProps<"/p/[slug]">) {
         {summary.count ? (
           <div className="grid gap-6 md:grid-cols-[280px_minmax(0,1fr)] md:gap-10">
             <ReviewSummary summary={summary} />
-            <div>{reviews.map((r) => <ReviewCard key={r.id} review={r} />)}</div>
+            <div>{reviews.map((r) => <ReviewCard key={r.id} review={r} action={<ReportDialog targetType="review" targetId={r.id} label="Report" title="Report this review" signedIn={!!viewer} />} />)}</div>
           </div>
         ) : (
           <p className="text-sm text-muted">No reviews for this listing yet. Reviews come only from buyers who completed an order.</p>

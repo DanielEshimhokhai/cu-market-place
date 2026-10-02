@@ -9,6 +9,7 @@ import { ProductGrid } from "@/components/market/ProductGrid";
 import { Rating } from "@/components/market/Rating";
 import { ReviewCard } from "@/components/market/ReviewCard";
 import { ReviewSummary } from "@/components/market/ReviewSummary";
+import { ReportDialog } from "@/components/market/ReportDialog";
 import { VerifiedBadge } from "@/components/market/VerifiedBadge";
 import { Avatar } from "@/components/ui/Avatar";
 import { buttonClass } from "@/components/ui/Button";
@@ -139,7 +140,7 @@ export default async function StorefrontPage({ params, searchParams }: PageProps
         {summary.count ? (
           <div className="grid gap-6 md:grid-cols-[280px_minmax(0,1fr)] md:gap-10">
             <ReviewSummary summary={summary} />
-            <div>{reviews.map((r) => <ReviewCard key={r.id} review={r} showProduct />)}</div>
+            <div>{reviews.map((r) => <ReviewCard key={r.id} review={r} showProduct action={<ReportDialog targetType="review" targetId={r.id} label="Report" title="Report this review" signedIn={!!viewer} />} />)}</div>
           </div>
         ) : (
           <p className="text-sm text-muted">No reviews yet. Only buyers with a completed order can leave one.</p>
@@ -165,7 +166,7 @@ export default async function StorefrontPage({ params, searchParams }: PageProps
             <HoursTable hours={b.hours} />
             <p className="mt-4 text-xs text-muted">Exact pickup details are shared privately after you order.</p>
             {!isOwner && (
-              <a href="#report" id="report" className="mt-4 inline-block text-xs text-muted hover:text-ink">Report this business</a>
+              <ReportDialog targetType="business" targetId={b.id} label="Report this business" title="Report this business" signedIn={!!viewer} className="mt-4 inline-block" />
             )}
           </div>
         </div>
