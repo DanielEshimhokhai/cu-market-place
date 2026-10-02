@@ -1,6 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
-import { mediaUrl } from "@/lib/images";
+import { imageUrl, mediaUrl } from "@/lib/images";
 import type { OpeningHours } from "@/lib/hours";
 import { getSellerOrders, type OrderSummary } from "./orders";
 
@@ -81,5 +81,56 @@ export async function getSellerOverview(businessId: string): Promise<SellerOverv
       .sort((a, b) => b.order_count - a.order_count || b.view_count - a.view_count)
       .slice(0, 5)
       .map((p) => ({ id: p.id, slug: p.slug, title: p.title, orders: p.order_count, views: p.view_count })),
+  };
+}
+
+export type SellerProductRow = {
+  id: string; slug: string; title: string; kind: "product" | "service"; price_kobo: number; stock: number | null;
+  status: "draft" | "active" | "paused" | "removed"; view_count: number; order_count: number; image: string | null; updated_at: string;
+};
+
+export async function getSellerProducts(businessId: string): Promise<SellerProductRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, slug, title, kind, price_kobo, stock, status, view_count, order_count, updated_at, images:product_images(path, position)")
+    .eq("business_id", businessId)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map((p) => {
+    const first = [...((p.images as { path: string; position: number }[]) ?? [])].sort((a, b) => a.position - b.position)[0];
+    return { ...p, image: imageUrl(first?.path) } as SellerProductRow;
+  });
+}
+
+export type EditableProduct = {
+  id: string; title: string; kind: "product" | "service"; category_id: string | null; description: string; price_kobo: number;
+  compare_at_kobo: number | null; condition: "new" | "like_new" | "used"; stock: number | null; pickup_location_id: string | null;
+  allows_pickup: boolean; allows_delivery: boolean; delivery_note: string | null; status: "draft" | "active" | "paused" | "removed";
+  images: { path: string; url: string }[];
+  variants: { name: string; value: string; stock: number | null; price_delta_kobo: number }[];
+};
+
+export async function getEditableProduct(businessId: string, id: string): Promise<EditableProduct | null> {
+  if (!/^[0-9a-f-]{36}$/.test(id)) return null;
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("products")
+    .select(
+      "id, title, kind, category_id, description, price_kobo, compare_at_kobo, condition, stock, pickup_location_id, allows_pickup, allows_delivery, delivery_note, status, " +
+        "images:product_images(path, position), variants:product_variants(name, value, stock, price_delta_kobo, position)",
+    )
+    .eq("id", id)
+    .eq("business_id", businessId)
+    .maybeSingle();
+  if (!data) return null;
+  const row = data as unknown as Omit<EditableProduct, "images" | "variants"> & {
+    images: { path: string; position: number }[];
+    variants: (EditableProduct["variants"][number] & { position: number })[];
+  };
+  return {
+    ...row,
+    images: [...row.images].sort((a, b) => a.position - b.position).map((i) => ({ path: i.path, url: imageUrl(i.path)! })),
+    variants: [...row.variants].sort((a, b) => a.position - b.position).map(({ position: _p, ...v }) => v),
   };
 }
