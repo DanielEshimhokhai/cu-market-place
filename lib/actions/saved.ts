@@ -42,3 +42,21 @@ export async function toggleSavedBusiness(businessId: string): Promise<ToggleRes
   revalidatePath("/saved");
   return { ok: !error, saved: !error };
 }
+
+const prefsSchema = z.object({
+  notify_price_drop: z.boolean(),
+  notify_back_in_stock: z.boolean(),
+  notify_new_listings: z.boolean(),
+});
+
+export async function updateNotificationPrefs(prefs: z.input<typeof prefsSchema>): Promise<{ ok: boolean }> {
+  const parsed = prefsSchema.safeParse(prefs);
+  if (!parsed.success) return { ok: false };
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  const { error } = await supabase.from("profiles").update(parsed.data).eq("id", user.id);
+  revalidatePath("/saved");
+  revalidatePath("/account");
+  return { ok: !error };
+}
