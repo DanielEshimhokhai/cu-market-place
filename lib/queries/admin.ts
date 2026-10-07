@@ -28,14 +28,14 @@ export async function getReports(status: "open" | "closed" | "all", page = 1): P
   const supabase = await createClient();
   let q = supabase
     .from("reports")
-    .select("id, reason, details, status, created_at, resolution_note, target_type, target_id, reporter:public_profiles!reports_reporter_id_fkey(full_name)", { count: "exact" })
+    .select("id, reason, details, status, created_at, resolution_note, target_type, target_id, reporter:public_profiles!reports_reporter_id_fkey(display_name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(...range(page));
   if (status === "open") q = q.in("status", ["open", "reviewing"]);
   if (status === "closed") q = q.in("status", ["resolved", "dismissed"]);
   const { data, count, error } = await q;
   if (error) throw error;
-  type Row = Omit<ReportView, "target" | "reporter"> & { target_type: ReportView["target"]["type"]; target_id: string; reporter: { full_name: string } | null };
+  type Row = Omit<ReportView, "target" | "reporter"> & { target_type: ReportView["target"]["type"]; target_id: string; reporter: { display_name: string } | null };
   const rows = data as unknown as Row[];
   const ids = (t: string) => rows.filter((r) => r.target_type === t).map((r) => r.target_id);
 
@@ -43,12 +43,12 @@ export async function getReports(status: "open" | "closed" | "all", page = 1): P
     ids("product").length ? supabase.from("products").select("id, title, slug, business_id").in("id", ids("product")) : { data: [] },
     ids("business").length ? supabase.from("businesses").select("id, name, slug").in("id", ids("business")) : { data: [] },
     ids("review").length ? supabase.from("reviews").select("id, body, rating, product:products(slug, title)").in("id", ids("review")) : { data: [] },
-    ids("user").length ? supabase.from("public_profiles").select("id, full_name").in("id", ids("user")) : { data: [] },
+    ids("user").length ? supabase.from("public_profiles").select("id, display_name").in("id", ids("user")) : { data: [] },
   ]);
   const p = new Map((products.data ?? []).map((x) => [x.id as string, x as { title: string; slug: string; business_id: string }]));
   const b = new Map((businesses.data ?? []).map((x) => [x.id as string, x as { name: string; slug: string }]));
   const rv = new Map((reviews.data ?? []).map((x) => [x.id as string, x as unknown as { body: string | null; rating: number; product: { slug: string; title: string } | null }]));
-  const u = new Map((users.data ?? []).map((x) => [x.id as string, x as { full_name: string }]));
+  const u = new Map((users.data ?? []).map((x) => [x.id as string, x as { display_name: string }]));
 
   const target = (r: Row): ReportView["target"] => {
     const base = { type: r.target_type, id: r.target_id };
@@ -66,11 +66,11 @@ export async function getReports(status: "open" | "closed" | "all", page = 1): P
         return { ...base, label: x ? `${x.rating}★ review${x.product ? ` on ${x.product.title}` : ""}: “${(x.body ?? "").slice(0, 80)}”` : "Deleted review", href: x?.product ? `/p/${x.product.slug}#reviews` : null };
       }
       default:
-        return { ...base, label: u.get(r.target_id)?.full_name ?? "User", href: null };
+        return { ...base, label: u.get(r.target_id)?.display_name ?? "User", href: null };
     }
   };
   return {
-    items: rows.map((r) => ({ ...r, reporter: shortName(r.reporter?.full_name ?? ""), target: target(r) })),
+    items: rows.map((r) => ({ ...r, reporter: shortName(r.reporter?.display_name ?? ""), target: target(r) })),
     total: count ?? 0,
   };
 }
@@ -129,12 +129,12 @@ export async function getAdminReviews(page = 1) {
   const supabase = await createClient();
   const { data, count, error } = await supabase
     .from("reviews")
-    .select("id, rating, body, is_hidden, created_at, author:public_profiles!reviews_author_id_fkey(full_name), product:products(title, slug), business:businesses(name)", { count: "exact" })
+    .select("id, rating, body, is_hidden, created_at, author:public_profiles!reviews_author_id_fkey(display_name), product:products(title, slug), business:businesses(name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(...range(page));
   if (error) throw error;
-  type Row = { id: string; rating: number; body: string | null; is_hidden: boolean; created_at: string; author: { full_name: string } | null; product: { title: string; slug: string } | null; business: { name: string } | null };
-  return { items: (data as unknown as Row[]).map((r) => ({ ...r, author: shortName(r.author?.full_name ?? "") })), total: count ?? 0 };
+  type Row = { id: string; rating: number; body: string | null; is_hidden: boolean; created_at: string; author: { display_name: string } | null; product: { title: string; slug: string } | null; business: { name: string } | null };
+  return { items: (data as unknown as Row[]).map((r) => ({ ...r, author: shortName(r.author?.display_name ?? "") })), total: count ?? 0 };
 }
 
 export async function getAdminCategories() {

@@ -106,7 +106,7 @@ export default async function OrderPage({ params }: PageProps<"/orders/[id]">) {
             <h2 className="mb-4 text-sm font-semibold">Status</h2>
             <OrderTimeline status={order.status} fulfilment={order.fulfilment} events={order.events} />
           </section>
-          <Link href={`/b/${b.slug}`} className="block rounded-card border border-line bg-surface p-4 hover:border-line-strong">
+          <Link href={b.slug ? `/b/${b.slug}` : "/businesses"} className="block rounded-card border border-line bg-surface p-4 hover:border-line-strong">
             <p className="text-xs text-muted">Seller</p>
             <p className="mt-0.5 flex items-center gap-1 text-sm font-medium text-ink">
               {b.name}

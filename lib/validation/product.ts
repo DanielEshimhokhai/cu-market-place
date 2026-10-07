@@ -61,6 +61,10 @@ export const productSchema = z
       ctx.addIssue({ code: "custom", path: ["compare_at"], message: "Compare-at price must be higher than the price" });
     }
     if (!p.allows_pickup && !p.allows_delivery) ctx.addIssue({ code: "custom", path: ["allows_pickup"], message: "Offer pickup, delivery, or both" });
+    // Buyers choose exactly one option and orders record one, so a listing has a single option type.
+    if (new Set(p.variants.map((v) => v.name.trim().toLowerCase())).size > 1) {
+      ctx.addIssue({ code: "custom", path: ["variants"], message: "Use one option type per listing, e.g. Size. List colours as separate listings." });
+    }
     const keys = p.variants.map((v) => `${v.name.toLowerCase()}:${v.value.toLowerCase()}`);
     if (new Set(keys).size !== keys.length) ctx.addIssue({ code: "custom", path: ["variants"], message: "Each option value should appear once" });
   })

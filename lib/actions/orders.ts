@@ -25,7 +25,7 @@ export async function updateOrderStatus(input: z.input<typeof schema>): Promise<
   if (!parsed.success) return { ok: false, error: "Invalid request." };
   const { orderId, status, instructions, reason } = parsed.data;
   const supabase = await createClient();
-  const { data: order, error } = await supabase
+  const { error } = await supabase
     .rpc("set_order_status", { p_order_id: orderId, p_status: status, p_instructions: instructions ?? null })
     .single();
   if (error) {
@@ -34,22 +34,11 @@ export async function updateOrderStatus(input: z.input<typeof schema>): Promise<
   }
 
   // A cancellation reason goes to the other party as a message on the order's conversation.
+  // start_order_conversation works for buyer and seller alike and targets this order's thread.
   if (status === "cancelled" && reason) {
-    const o = order as { business_id: string; buyer_id: string };
     const { data: { user } } = await supabase.auth.getUser();
-    const { data: conv } = await supabase
-      .from("conversations")
-      .select("id")
-      .eq("buyer_id", o.buyer_id)
-      .eq("business_id", o.business_id)
-      .order("last_message_at", { ascending: false, nullsFirst: false })
-      .limit(1)
-      .maybeSingle();
-    let conversationId = conv?.id as string | undefined;
-    if (!conversationId && user?.id === o.buyer_id) {
-      const { data: started } = await supabase.rpc("start_conversation", { p_business_id: o.business_id, p_order_id: orderId });
-      conversationId = started as string | undefined;
-    }
+    const { data: started } = await supabase.rpc("start_order_conversation", { p_order_id: orderId });
+    const conversationId = started as string | null;
     if (conversationId && user) {
       await supabase.from("messages").insert({ conversation_id: conversationId, sender_id: user.id, body: `Order cancelled: ${reason}`, order_id: orderId });
     }

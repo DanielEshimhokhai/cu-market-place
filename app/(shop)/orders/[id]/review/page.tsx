@@ -45,7 +45,7 @@ export default async function ReviewPage({ params }: PageProps<"/orders/[id]/rev
           )}
           {items.length > 0 && items.every((i) => myRating.has(i.product_id!)) && (
             <p className="text-sm text-muted">
-              All done. Thanks! <Link href={`/b/${order.business.slug}#reviews`} className="font-medium text-accent hover:underline">See the store&apos;s reviews</Link>
+              All done. Thanks! <Link href={order.business.slug ? `/b/${order.business.slug}#reviews` : "/orders"} className="font-medium text-accent hover:underline">See the store&apos;s reviews</Link>
             </p>
           )}
         </div>

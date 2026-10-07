@@ -83,7 +83,7 @@ export function CartView({ viewer, sellers }: { viewer: Viewer; sellers: Record<
       setError(null);
       const lines = orderable.flatMap((g) => g.lines);
       const r = await placeOrders({
-        lines: lines.map((l) => ({ productId: l.productId, variantId: l.variantId, quantity: l.quantity })),
+        lines: lines.map((l) => ({ productId: l.productId, variantId: l.variantId, quantity: l.quantity, unitPriceKobo: l.unitPriceKobo })),
         groups: orderable.map((g) => ({ businessId: g.businessId, fulfilment: fulfilmentFor(g), note: choices[g.businessId]?.note ?? "" })),
       });
       if (!r.ok) {

@@ -6,6 +6,7 @@ const MESSAGES: Record<string, string> = {
   DELIVERY_UNAVAILABLE: "Delivery isn't available for one of these sellers.",
   PICKUP_UNAVAILABLE: "Pickup isn't available for one of these sellers. Choose delivery instead.",
   NOT_AUTHENTICATED: "Sign in to place your order.",
+  PRICE_CHANGED: "A price changed since you opened your cart. We've updated it — check the new total and place your order again.",
 };
 
 /** Maps an error raised by the place_orders function to a sentence for the buyer. */
@@ -15,4 +16,4 @@ export function checkoutErrorMessage(raw: string): string {
 }
 
 /** Errors after which the cart should be re-checked against the database. */
-export const shouldReconcile = (raw: string) => /\b(OUT_OF_STOCK|UNAVAILABLE|INVALID_VARIANT)\b/.test(raw);
+export const shouldReconcile = (raw: string) => /\b(OUT_OF_STOCK|UNAVAILABLE|INVALID_VARIANT|PRICE_CHANGED)\b/.test(raw);

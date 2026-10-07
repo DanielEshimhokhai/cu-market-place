@@ -60,15 +60,15 @@ export const getProduct = cache(async (slug: string): Promise<ProductDetail | nu
 });
 
 const REVIEW_SELECT =
-  "id, rating, body, created_at, quality, communication, accuracy, fulfilment_rating, author:public_profiles!reviews_author_id_fkey(full_name), product:products(title, slug)";
+  "id, rating, body, created_at, quality, communication, accuracy, fulfilment_rating, author:public_profiles!reviews_author_id_fkey(display_name), product:products(title, slug)";
 
 type ReviewRow = Omit<ReviewView, "author" | "productTitle" | "productSlug"> & {
-  author: { full_name: string } | null;
+  author: { display_name: string } | null;
   product: { title: string; slug: string } | null;
 };
 const toReview = (r: ReviewRow): ReviewView => ({
   ...r,
-  author: shortName(r.author?.full_name ?? ""),
+  author: shortName(r.author?.display_name ?? ""),
   productTitle: r.product?.title,
   productSlug: r.product?.slug,
 });

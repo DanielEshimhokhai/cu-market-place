@@ -59,3 +59,9 @@ describe("productSchema", () => {
   test("image paths must be storage paths or https URLs", () =>
     expect(productSchema.safeParse({ ...valid, images: JSON.stringify(["javascript:alert(1)"]) }).success).toBe(false));
 });
+
+test("options use a single name (e.g. all Size) so buyers pick exactly one", () => {
+  const r = productSchema.safeParse({ ...valid, variants: JSON.stringify([{ name: "Size", value: "42" }, { name: "Colour", value: "Red" }]) });
+  expect(r.success).toBe(false);
+  if (!r.success) expect(r.error.issues[0].message).toBe("Use one option type per listing, e.g. Size. List colours as separate listings.");
+});

@@ -45,8 +45,10 @@ export async function reconcileCart(input: { productId: string; variantId: strin
   });
 }
 
+// The price the buyer saw is sent so the database can refuse the order if it changed (PRICE_CHANGED).
+const placeLineSchema = lineSchema.extend({ unitPriceKobo: z.number().int().min(0) });
 const placeSchema = z.object({
-  lines: linesSchema,
+  lines: z.array(placeLineSchema).min(1).max(50),
   groups: z
     .array(z.object({ businessId: z.uuid(), fulfilment: z.enum(["pickup", "delivery"]), note: z.string().trim().max(200) }))
     .max(50),
@@ -64,7 +66,7 @@ export async function placeOrders(input: z.input<typeof placeSchema>): Promise<P
   if (!user) return { ok: false, error: checkoutErrorMessage("NOT_AUTHENTICATED"), code: "NOT_AUTHENTICATED" };
 
   const { data, error } = await supabase.rpc("place_orders", {
-    p_items: parsed.data.lines.map((l) => ({ product_id: l.productId, variant_id: l.variantId, quantity: l.quantity })),
+    p_items: parsed.data.lines.map((l) => ({ product_id: l.productId, variant_id: l.variantId, quantity: l.quantity, unit_price_kobo: l.unitPriceKobo })),
     p_groups: parsed.data.groups.map((g) => ({ business_id: g.businessId, fulfilment: g.fulfilment, note: g.note || null })),
   });
   if (error) return { ok: false, error: checkoutErrorMessage(error.message), code: error.message };

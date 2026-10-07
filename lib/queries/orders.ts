@@ -26,13 +26,15 @@ export type OrderDetail = OrderSummary & {
 };
 
 const SUMMARY_SELECT =
-  "id, number, status, fulfilment, subtotal_kobo, created_at, " +
-  "business:businesses(id, slug, name, verified), buyer:public_profiles!orders_buyer_id_fkey(full_name, cu_verified), " +
+  "id, number, business_id, status, fulfilment, subtotal_kobo, created_at, " +
+  "business:businesses(id, slug, name, verified), buyer:public_profiles!orders_buyer_id_fkey(display_name, cu_verified), " +
   "items:order_items(id, product_id, title_snapshot, variant_snapshot, image_snapshot, unit_price_kobo, quantity, product:products(slug))";
 
-type Row = Omit<OrderSummary, "items" | "buyer" | "reviewable" | "number"> & {
+type Row = Omit<OrderSummary, "items" | "buyer" | "reviewable" | "number" | "business"> & {
   number: number | string;
-  buyer: { full_name: string; cu_verified: boolean } | null;
+  business_id: string;
+  business: OrderSummary["business"] | null;
+  buyer: { display_name: string; cu_verified: boolean } | null;
   items: (Omit<OrderItem, "image" | "productSlug"> & { image_snapshot: string | null; product: { slug: string } | null })[];
 };
 
@@ -43,8 +45,10 @@ function toSummary(r: Row, reviewed: Set<string>): OrderSummary {
   }));
   return {
     ...r,
+    // The seller may be unreadable now (e.g. removed); keep the order usable.
+    business: r.business ?? { id: r.business_id, slug: "", name: "Store unavailable", verified: false },
     number: Number(r.number),
-    buyer: r.buyer ? { name: shortName(r.buyer.full_name), verified: r.buyer.cu_verified } : null,
+    buyer: r.buyer ? { name: shortName(r.buyer.display_name), verified: r.buyer.cu_verified } : null,
     items,
     reviewable: r.status === "completed" && items.some((i) => i.product_id && !reviewed.has(`${r.id}:${i.product_id}`)),
   };
@@ -98,9 +102,9 @@ export async function getOrder(id: string, viewerId: string): Promise<OrderDetai
   const { data, error } = await supabase
     .from("orders")
     .select(
-      "id, number, status, fulfilment, subtotal_kobo, created_at, note, pickup_instructions, buyer_id, confirmed_at, ready_at, completed_at, cancelled_at, " +
+      "id, number, business_id, status, fulfilment, subtotal_kobo, created_at, note, pickup_instructions, buyer_id, confirmed_at, ready_at, completed_at, cancelled_at, " +
         "business:businesses(id, slug, name, verified, owner_id, offers_delivery, location:locations(name)), " +
-        "buyer:public_profiles!orders_buyer_id_fkey(full_name, cu_verified), " +
+        "buyer:public_profiles!orders_buyer_id_fkey(display_name, cu_verified), " +
         "items:order_items(id, product_id, title_snapshot, variant_snapshot, image_snapshot, unit_price_kobo, quantity, product:products(slug)), " +
         "events:order_events(status, created_at)",
     )
@@ -109,7 +113,7 @@ export async function getOrder(id: string, viewerId: string): Promise<OrderDetai
   if (error) throw error;
   if (!data) return null;
   type DRow = Row & Omit<OrderDetail, keyof OrderSummary | "business" | "reviewedProductIds"> & {
-    business: OrderSummary["business"] & { owner_id: string; offers_delivery: boolean; location: { name: string } | null };
+    business: (OrderSummary["business"] & { owner_id: string; offers_delivery: boolean; location: { name: string } | null }) | null;
   };
   const row = data as unknown as DRow;
   const reviewed = row.buyer_id === viewerId ? await reviewedKeys([row.id], viewerId) : new Set<string>();
@@ -123,7 +127,7 @@ export async function getOrder(id: string, viewerId: string): Promise<OrderDetai
     ready_at: row.ready_at,
     completed_at: row.completed_at,
     cancelled_at: row.cancelled_at,
-    business: { ...summary.business, owner_id: row.business.owner_id, offers_delivery: row.business.offers_delivery, location: row.business.location?.name ?? null },
+    business: { ...summary.business, owner_id: row.business?.owner_id ?? "", offers_delivery: row.business?.offers_delivery ?? false, location: row.business?.location?.name ?? null },
     events: [...row.events].sort((a, b) => a.created_at.localeCompare(b.created_at)),
     reviewedProductIds: [...reviewed].map((k) => k.split(":")[1]),
   };

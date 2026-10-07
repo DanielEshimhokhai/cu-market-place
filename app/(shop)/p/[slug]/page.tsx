@@ -21,7 +21,7 @@ import { getViewer } from "@/lib/auth";
 import { formatNaira } from "@/lib/money";
 import { getProduct, getProductReviews, getRatingSummary, getResponseStats, getSimilar } from "@/lib/queries/product";
 import { getSavedProductIds } from "@/lib/queries/saved";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import { formatRelative, formatResponseTime } from "@/lib/time";
 
 export async function generateMetadata({ params }: PageProps<"/p/[slug]">): Promise<Metadata> {
@@ -61,7 +61,8 @@ export default async function ProductPage({ params }: PageProps<"/p/[slug]">) {
 
   if (!isOwner && product.status === "active") {
     after(async () => {
-      const supabase = await createClient();
+      // cookies() is not available inside after(); the counter is a security-definer RPC, so the anon client is enough.
+      const supabase = createPublicClient();
       await supabase.rpc("increment_product_view", { p_product_id: product.id });
     });
   }

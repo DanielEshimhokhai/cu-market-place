@@ -14,16 +14,20 @@ export type InboxItem = {
 
 const CONV_SELECT =
   "id, buyer_id, business_id, last_message_at, buyer_last_read_at, seller_last_read_at, " +
-  "business:businesses(name, slug, verified, logo_url, owner_id), buyer:public_profiles!conversations_buyer_id_fkey(full_name, cu_verified), " +
+  "business:businesses(name, slug, verified, logo_url, owner_id), buyer:public_profiles!conversations_buyer_id_fkey(display_name, cu_verified), " +
   "product:products(id, title, slug, price_kobo, images:product_images(path, position)), order:orders(id, number, status)";
 
 type ConvRow = {
   id: string; buyer_id: string; business_id: string; last_message_at: string | null; buyer_last_read_at: string | null; seller_last_read_at: string | null;
   business: { name: string; slug: string; verified: boolean; logo_url: string | null; owner_id: string };
-  buyer: { full_name: string; cu_verified: boolean } | null;
+  buyer: { display_name: string; cu_verified: boolean } | null;
   product: { id: string; title: string; slug: string; price_kobo: number; images: { path: string; position: number }[] } | null;
   order: { id: string; number: number; status: OrderStatus } | null;
 };
+
+/** A business the viewer can no longer read (removed, or hidden by moderation) still needs a name. */
+const UNAVAILABLE_BUSINESS: ConvRow["business"] = { name: "Store unavailable", slug: "", verified: false, logo_url: null, owner_id: "" };
+const withBusiness = <T extends { business: ConvRow["business"] | null }>(c: T) => ({ ...c, business: c.business ?? UNAVAILABLE_BUSINESS });
 
 const isUnread = (lastAt: string | null, readAt: string | null) => !!lastAt && (!readAt || lastAt > readAt);
 
@@ -40,7 +44,7 @@ export async function getInbox(viewer: Viewer): Promise<InboxItem[]> {
     .limit(1, { referencedTable: "messages" })
     .limit(100);
   if (error) throw error;
-  return (data as unknown as (ConvRow & { messages: { body: string; created_at: string; sender_id: string }[] })[]).map((c) => {
+  return (data as unknown as (ConvRow & { messages: { body: string; created_at: string; sender_id: string }[] })[]).map(withBusiness).map((c) => {
     const role = c.buyer_id === viewer.id ? "buyer" : "seller";
     const last = c.messages[0];
     return {
@@ -49,7 +53,7 @@ export async function getInbox(viewer: Viewer): Promise<InboxItem[]> {
       counterpart:
         role === "buyer"
           ? { name: c.business.name, verified: c.business.verified, avatar: mediaUrl(c.business.logo_url) }
-          : { name: shortName(c.buyer?.full_name ?? ""), verified: !!c.buyer?.cu_verified, avatar: null },
+          : { name: shortName(c.buyer?.display_name ?? ""), verified: !!c.buyer?.cu_verified, avatar: null },
       regarding: c.order ? `Order #${c.order.number}` : c.product?.title ?? null,
       lastMessage: last?.body ?? null,
       lastFromMe: last?.sender_id === viewer.id,
@@ -76,7 +80,7 @@ export async function getThread(id: string, viewer: Viewer): Promise<Thread | nu
   const supabase = await createClient();
   const { data } = await supabase.from("conversations").select(CONV_SELECT).eq("id", id).maybeSingle();
   if (!data) return null;
-  const c = data as unknown as ConvRow;
+  const c = withBusiness(data as unknown as ConvRow);
   const role = c.buyer_id === viewer.id ? "buyer" : c.business.owner_id === viewer.id ? "seller" : null;
   if (!role) return null; // admins can read via RLS but don't use the inbox
   const { data: messages } = await supabase
@@ -92,8 +96,8 @@ export async function getThread(id: string, viewer: Viewer): Promise<Thread | nu
     viewerId: viewer.id,
     counterpart:
       role === "buyer"
-        ? { name: c.business.name, verified: c.business.verified, avatar: mediaUrl(c.business.logo_url), href: `/b/${c.business.slug}` }
-        : { name: shortName(c.buyer?.full_name ?? ""), verified: !!c.buyer?.cu_verified, avatar: null, href: null },
+        ? { name: c.business.name, verified: c.business.verified, avatar: mediaUrl(c.business.logo_url), href: c.business.slug ? `/b/${c.business.slug}` : null }
+        : { name: shortName(c.buyer?.display_name ?? ""), verified: !!c.buyer?.cu_verified, avatar: null, href: null },
     product: c.product ? { id: c.product.id, title: c.product.title, slug: c.product.slug, price_kobo: c.product.price_kobo, image: imageUrl(img?.path) } : null,
     order: c.order ? { ...c.order, href: role === "buyer" ? `/orders/${c.order.id}` : `/sell/orders/${c.order.id}` } : null,
     messages: (messages ?? []) as Message[],
